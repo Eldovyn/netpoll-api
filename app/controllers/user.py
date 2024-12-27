@@ -1,12 +1,9 @@
 from ..databases import UserDatabase
 from flask import jsonify, url_for
-import mongoengine
 import sqlalchemy
 from flask_jwt_extended import create_access_token
 import re
 from ..utils import generate_id
-import datetime
-from ..utils import TokenAccountActiveEmail, TokenAccountActiveWeb
 
 
 class UserController:
