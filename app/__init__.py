@@ -138,4 +138,17 @@ def create_app():
             401,
         )
 
+    @jwt.user_lookup_error_loader
+    def missing_token_callback(jwt_header, jwt_data):
+        identity = jwt_data["sub"]
+        return (
+            jsonify(
+                {
+                    "message": "user account is inactive",
+                    "data": {"user_id": identity},
+                }
+            ),
+            403,
+        )
+
     return app

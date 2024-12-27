@@ -190,7 +190,7 @@ class UserController:
                         "username": user.username,
                         "email": user.email,
                         "is_active": user.is_active,
-                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, _external=True)}',
+                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, avatar_id=user.user_avatar.avatar_id, _external=True)}',
                     },
                 }
             ),
@@ -232,6 +232,7 @@ class UserController:
                             "username": user.username,
                             "email": user.email,
                             "is_active": user.is_active,
+                            "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, avatar_id=user.user_avatar.avatar_id, _external=True)}',
                         },
                     }
                 ),
@@ -248,7 +249,7 @@ class UserController:
                         "email": user.email,
                         "access_token": access_token,
                         "is_active": user.is_active,
-                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, _external=True)}',
+                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, avatar_id=user.user_avatar.avatar_id, _external=True)}',
                     },
                 }
             ),
