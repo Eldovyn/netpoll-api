@@ -2,7 +2,6 @@ from .database import Database
 from ..models import AccountActiveModel, UserModel
 from ..utils import DataNotFoundError
 from ..database import db
-import datetime
 
 
 class AccountActiveDatabase(Database):
@@ -32,7 +31,6 @@ class AccountActiveDatabase(Database):
             db.session.add(account_active)
             db.session.commit()
             return account_active
-        raise DataNotFoundError("user not found")
 
     @staticmethod
     async def get(category, **kwargs):

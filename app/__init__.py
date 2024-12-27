@@ -1,9 +1,12 @@
-from flask import Flask
-from flask_mail import Mail
-from flask_jwt_extended import JWTManager
+from flask import Flask, jsonify
 from .models import UserModel
 from .celery_app import celery_init_app
-from .models import ResetPasswordModel, UserModel, AccountActiveModel
+from .models import (
+    ResetPasswordModel,
+    UserModel,
+    AccountActiveModel,
+    TokenBlocklistModel,
+)
 from celery.schedules import crontab
 import datetime
 from .config import (
@@ -17,6 +20,8 @@ from .config import (
     database_postgres_url,
 )
 from .database import db
+from .jwt import jwt
+from .mail import mail
 
 
 def create_app():
@@ -40,15 +45,14 @@ def create_app():
     app.config["MAIL_PASSWORD"] = smtp_password
     app.config["MAIL_DEFAULT_SENDER"] = smtp_email
     app.config["SQLALCHEMY_DATABASE_URI"] = database_postgres_url
-
-    jwt = JWTManager(app)
-    global mail
-    mail = Mail(app)
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     global celery_app
     celery_app = celery_init_app(app)
 
     db.init_app(app)
+    jwt.init_app(app)
+    mail.init_app(app)
 
     @celery_app.task(name="delete_token_task")
     def delete_token_task():
@@ -78,6 +82,7 @@ def create_app():
         from .api.reset_password_api import reset_password_router
         from .api.account_active import account_active_router
         from .api.image_api import image_router
+        from .api.logout import logout_router
 
         app.register_blueprint(register_router)
         app.register_blueprint(login_router)
@@ -86,6 +91,7 @@ def create_app():
         app.register_blueprint(reset_password_router)
         app.register_blueprint(account_active_router)
         app.register_blueprint(image_router)
+        app.register_blueprint(logout_router)
 
         db.create_all()
 
@@ -98,25 +104,38 @@ def create_app():
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         return response
 
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
+        jti = jwt_payload["jti"]
+        token = (
+            db.session.query(TokenBlocklistModel.token_id).filter_by(jti=jti).scalar()
+        )
+        return token is not None
+
     @jwt.user_identity_loader
     def user_identity_lookup(user):
-        return user.id
+        return user.user_id
 
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):
         identity = jwt_data["sub"]
-        return UserModel.objects(id=identity, is_active=True).first()
+        return UserModel.query.filter(
+            UserModel.user_id == identity, UserModel.is_active == True
+        ).first()
+
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        return jsonify({"meessage": "token has been revoked. please login again."}), 401
 
     @jwt.invalid_token_loader
-    def invalid_token_callback(error_message):
-        return {"message": "authorization invalid"}, 401
+    def invalid_token_callback(reason):
+        return jsonify({"message": f"token is invalid. {reason}"}), 422
 
-    @jwt.user_lookup_error_loader
-    def missing_token_callback(jwt_header, jwt_data):
-        identity = jwt_data["sub"]
-        return {
-            "message": "user account is inactive",
-            "data": {"user_id": identity},
-        }, 403
+    @jwt.unauthorized_loader
+    def missing_authorization_header_callback(reason):
+        return (
+            jsonify({"message": "authorization header is missing or invalid."}),
+            401,
+        )
 
     return app

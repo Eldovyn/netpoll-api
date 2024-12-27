@@ -1,9 +1,10 @@
-from ..databases import UserDatabase
+from ..databases import UserDatabase, TokenBlacklistDatabase
 from flask import jsonify, url_for
 import sqlalchemy
 from flask_jwt_extended import create_access_token
 import re
 from ..utils import generate_id
+import datetime
 
 
 class UserController:
@@ -185,16 +186,23 @@ class UserController:
                 {
                     "message": "success get user",
                     "data": {
-                        "id": user.id,
+                        "user_id": user.user_id,
                         "username": user.username,
                         "email": user.email,
                         "is_active": user.is_active,
-                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.id, _external=True)}',
+                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, _external=True)}',
                     },
                 }
             ),
             200,
         )
+
+    @staticmethod
+    async def user_logout(jti):
+        await TokenBlacklistDatabase.insert(
+            generate_id(), jti, datetime.datetime.now(datetime.timezone.utc).timestamp()
+        )
+        return jsonify({"message": "success logout"}), 201
 
     @staticmethod
     async def user_login(email, password):
@@ -240,6 +248,7 @@ class UserController:
                         "email": user.email,
                         "access_token": access_token,
                         "is_active": user.is_active,
+                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, _external=True)}',
                     },
                 }
             ),

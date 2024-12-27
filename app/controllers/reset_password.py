@@ -2,7 +2,7 @@ from ..databases import ResetPasswordDatabase, UserDatabase
 from flask import jsonify, url_for, request, render_template, redirect
 from werkzeug.security import generate_password_hash
 import datetime
-from ..utils import TokenResetPassword
+from ..utils import TokenResetPassword, generate_id
 from ..config import todoplus_url
 import re
 from ..task import send_email_task
@@ -103,7 +103,7 @@ class ResetPasswordController:
         token = await TokenResetPassword.insert(f"{user.id}", int(created_at))
         if not (
             user_token := await ResetPasswordDatabase.insert(
-                user.id, token, int(expired_at)
+                generate_id(), user.user_id, token, int(expired_at), int(created_at)
             )
         ):
             return (

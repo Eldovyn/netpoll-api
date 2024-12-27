@@ -22,8 +22,11 @@ class UserDatabase(Database):
     @staticmethod
     async def get(category, **kwargs):
         email = kwargs.get("email")
+        user_id = kwargs.get("user_id")
         if category == "email":
             return UserModel.query.filter(UserModel.email == email).first()
+        if category == "user_id":
+            return UserModel.query.filter(UserModel.user_id == user_id).first()
 
     @staticmethod
     async def delete():
