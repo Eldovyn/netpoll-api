@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-white">
+    <div class="border bg-gray-900 md:w-[60%] w-[80%] xl:w-[45%] mx-auto rounded-md p-5 mt-[20rem]">
+        <p class="text-center text-white font-semibold">Great, now verify your email</p>
+        <img class="w-[20%] mx-auto" src="{{ url_for('static', filename='image/iconEmailVerification.png') }}" alt="">
+        <p class="text-gray-400 text-sm">
+            Check your inbox at {{ email }} and click the verification link inside to complete your registration. this link will expire in 5 minutes, so verify soon!
+        </p>
+        <br>
+        <p class="text-gray-400 text-sm"><span class="font-semibold text-gray-300">Don't receive the email?</span> check your spam folder</p>
+    </div>
+</body>
+
+</html>
