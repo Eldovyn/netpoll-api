@@ -289,6 +289,16 @@ class UserController:
                 errors["password"].append("password contains special character(s)")
             else:
                 errors["password"] = ["password contains special character(s)"]
+        if len(username) > 20:
+            if "username" in errors:
+                errors["username"].append("username must be less than 20 characters")
+            else:
+                errors["username"] = ["username must be less than 20 characters"]
+        if len(email) > 50:
+            if "email" in errors:
+                errors["email"].append("email must be less than 50 characters")
+            else:
+                errors["email"] = ["email must be less than 50 characters"]
         if errors:
             return (
                 jsonify(
