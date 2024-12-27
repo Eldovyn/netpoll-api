@@ -316,9 +316,11 @@ class UserController:
                 400,
             )
         result_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        user_id = generate_id()
+        avatar_id = generate_id()
         try:
             user = await UserDatabase.insert(
-                generate_id(), email, username, result_password, avatar
+                user_id, email, username, result_password, avatar, avatar_id
             )
         except sqlalchemy.exc.IntegrityError:
             return (
