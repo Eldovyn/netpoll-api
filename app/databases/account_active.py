@@ -35,17 +35,18 @@ class AccountActiveDatabase(Database):
     @staticmethod
     async def get(category, **kwargs):
         user_id = kwargs.get("user_id")
-        web_token = kwargs.get("web_token")
-        email_token = kwargs.get("email_token")
+        token_web = kwargs.get("token_web")
+        token_email = kwargs.get("token_email")
         if category == "account_active":
             if user := UserModel.query.filter(UserModel.user_id == user_id).first():
                 return AccountActiveModel.query.filter(
-                    AccountActiveModel.user_id == user.user_id
+                    AccountActiveModel.user_id == user.user_id,
+                    AccountActiveModel.token_web == token_web,
                 ).first()
         if category == "account_active_email":
             if user := UserModel.query.filter(UserModel.user_id == user_id).first():
                 return AccountActiveModel.query.filter(
-                    AccountActiveModel.token_email == email_token,
+                    AccountActiveModel.token_email == token_email,
                     AccountActiveModel.user_id == user.user_id,
                 ).first()
 
