@@ -210,9 +210,9 @@ class UserController:
 
         errors = {}
         if len(email.strip()) == 0:
-            errors["email"] = "email cannot be empty"
+            errors["email"] = ["email cannot be empty"]
         if len(password.strip()) == 0:
-            errors["password"] = "password cannot be empty"
+            errors["password"] = ["password cannot be empty"]
         if errors:
             return jsonify({"message": "input invalid", "errors": errors}), 400
         if not (user := await UserDatabase.get("email", email=email)):
