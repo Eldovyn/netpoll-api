@@ -54,8 +54,11 @@ class AccountActiveDatabase(Database):
     async def delete(category, **kwargs):
         user_id = kwargs.get("user_id")
         if category == "user_id":
-            if user_data := UserModel.objects(id=user_id).first():
-                return AccountActiveModel.objects(user=user_data).delete()
+            if token := AccountActiveModel.query.filter(
+                AccountActiveModel.user_id == user_id
+            ).first():
+                db.session.delete(token)
+                db.session.commit()
 
     @staticmethod
     async def update(category, **kwargs):

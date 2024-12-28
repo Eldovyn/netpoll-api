@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +7,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-white">
-    <div class="border bg-gray-900 md:w-[60%] w-[80%] xl:w-[45%] mx-auto rounded-md p-5 mt-[20rem]">
-        <p class="text-center text-white font-semibold">Thanks {{ username }} for your registration</p>
-        <img class="w-[10%] m-3 mx-auto" src="{{ url_for('static', filename='image/iconEmailVerification.png') }}" alt="">
-        <p class="text-gray-400 text-sm text-center">
-            your account has been successfully active
-        </p>
-        <div class="flex justify-end">
-            <a href="{{ todoplus_url }}login" class="underline font-semibold text-sm text-gray-400">Login</a>
-        </div>       
-    </div>
+<body class="bg-black">
+    <section class="w-full min-h-screen flex flex-col pt-8 pb-5 items-center justify-center">
+        <div class="bg-[#1c1c1e] w-[80%] md:w-[60%] xl:w-[45%] mx-auto rounded-md p-8 mt-[12rem]">
+            <p class="text-center text-gray-400 font-semibold">
+                Thanks <span class="text-gray-300">{{ user.email }}</span> for your registration
+            </p>
+            <img
+                src="{{ url_for('static', filename='image/verification.png') }}"
+                alt="Email Verification Icon"
+                class="w-[20%] m-3 mx-auto"
+            />
+            <p class="text-gray-400 text-sm text-center">
+                Your account has been successfully active
+            </p>
+            <a href="{{ netpoll_url }}login">
+                <p class="underline font-semibold text-sm text-gray-400 text-right">
+                    Login
+                </p>
+            </a>
+        </div>
+    </section>
 
     <script>
-        setTimeout(() => { window.location.href = "{{ todoplus_url }}login"; }, 5000);
+        setTimeout(() => { window.location.href = "{{ netpoll_url }}login"; }, 5000);
     </script>
 </body>
-
 </html>

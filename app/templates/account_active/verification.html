@@ -1,23 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        let isLoading = false;
+
+        async function resendVerificationEmail() {
+            try {
+                const response = await fetch('{{ host_url }}netpoll/account-active', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: "{{ user.email }}",
+                    }),
+                });
+
+                const data = await response.json();
+                if (response.status === 201) {
+                    window.location.href = `{{ host_url }}netpoll/account-active/page-verification?token=${data.data.token}`;
+                }
+            } catch (error) {
+                console.error('Error:', error.message);
+                alert('Error resending verification email. Please try again later.');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function handleClick() {
+            if (isLoading) {
+                return;
+            }
+            isLoading = true;
+            resendVerificationEmail();
+        }
+    </script>
 </head>
 
-<body class="bg-white">
-    <div class="border bg-gray-900 md:w-[60%] w-[80%] xl:w-[45%] mx-auto rounded-md p-5 mt-[20rem]">
-        <p class="text-center text-white font-semibold">Great, now verify your email</p>
-        <img class="w-[20%] mx-auto" src="{{ url_for('static', filename='image/iconEmailVerification.png') }}" alt="">
-        <p class="text-gray-400 text-sm">
-            Check your inbox at {{ email }} and click the verification link inside to complete your registration. this link will expire in 5 minutes, so verify soon!
-        </p>
-        <br>
-        <p class="text-gray-400 text-sm"><span class="font-semibold text-gray-300">Don't receive the email?</span> check your spam folder</p>
-    </div>
+<body class="bg-black">
+    <section class="w-full min-h-screen flex flex-col pt-8 pb-5 items-center justify-center">
+        <div class="bg-[#1c1c1e] w-[80%] md:w-[60%] xl:w-[45%] mx-auto rounded-md p-8">
+            <p class="text-center text-white font-semibold">Great {{ user.username }}, now verify your email</p>
+            <img src="{{ url_for('static', filename='image/iconEmailVerification.png') }}" alt="Email Verification Icon" class="w-[20%] mx-auto" />
+            <p class="text-gray-400 text-sm">
+                Check your inbox at <span class="text-gray-300">{{ user.email }}</span> and click the verification link inside to complete your registration.
+                This link will expire in 5 minutes, so verify soon!
+            </p>
+            <br />
+            <div class="flex flex-col mb-3">
+                <p class="text-gray-400 text-sm">
+                    <span class="font-semibold text-gray-300">
+                        Don't receive the email?
+                    </span>
+                    Check your spam folder.
+                </p>
+                <p
+                    class="text-blue-500 text-sm underline cursor-pointer"
+                    onclick="handleClick()"
+                >
+                    Resend Verification Email
+                </p>
+            </div>
+        </div>
+    </section>
 </body>
-
 </html>

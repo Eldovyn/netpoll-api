@@ -3,7 +3,7 @@ from flask import jsonify, url_for, request, render_template, redirect
 from werkzeug.security import generate_password_hash
 import datetime
 from ..utils import TokenResetPassword, generate_id
-from ..config import todoplus_url
+from ..config import netpoll_url
 import re
 from ..task import send_email_task
 
@@ -73,7 +73,7 @@ class ResetPasswordController:
                 await ResetPasswordDatabase.delete(
                     "user_id", user_id=valid_token["user_id"]
                 )
-                return redirect(todoplus_url)
+                return redirect(f"{netpoll_url}login")
             return render_template(
                 "reset_password.html",
                 errors=errors["password"],

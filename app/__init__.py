@@ -60,11 +60,13 @@ def create_app():
         if data := db.session.query(ResetPasswordModel).all():
             for item1 in data:
                 if item1.expired_at <= expired_at:
-                    item1.delete()
+                    db.session.delete(item1)
+                    db.session.commit()
         if data := db.session.query(AccountActiveModel).all():
             for item2 in data:
                 if item2.expired_at <= expired_at:
-                    item2.delete()
+                    db.session.delete(item2)
+                    db.session.commit()
         return f"delete token at {int(datetime.datetime.now(datetime.timezone.utc).timestamp())}"
 
     celery_app.conf.beat_schedule = {

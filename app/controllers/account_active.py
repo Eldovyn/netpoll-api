@@ -1,47 +1,36 @@
-from flask import jsonify, render_template, redirect, url_for
+from flask import jsonify, render_template, redirect, url_for, request
 import datetime
 from ..databases import AccountActiveDatabase, UserDatabase
 from ..utils import TokenAccountActiveEmail, TokenAccountActiveWeb, generate_id
-from ..config import todoplus_url
+from ..config import netpoll_url
 from ..task import send_email_task
 
 
 class AccountActiveController:
     @staticmethod
     async def user_account_active_page(token):
+        created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
         if len(token.strip()) == 0:
-            return (
-                jsonify(
-                    {"message": "input invalid", "errors": ["token cannot be empty"]}
-                ),
-                400,
-            )
+            return redirect(f"{netpoll_url}not-found")
         if not (valid_token := await TokenAccountActiveWeb.get(token)):
-            return jsonify({"message": "invalid token"}), 404
+            return redirect(f"{netpoll_url}not-found")
         if not (
             user := await AccountActiveDatabase.get(
                 "account_active", user_id=valid_token["user_id"], token_web=token
             )
         ):
-            return jsonify({"message": "invalid token"}), 404
+            return redirect(f"{netpoll_url}not-found")
         if user.token_web != token:
-            return jsonify({"message": "invalid token"}), 404
-        return (
-            jsonify(
-                {
-                    "message": "success get page",
-                    "data": {
-                        "username": user.user.username,
-                        "email": user.user.email,
-                        "user_id": user.user.user_id,
-                        "is_active": user.user.is_active,
-                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user.user_id, avatar_id=user.user.user_avatar.avatar_id, _external=True)}',
-                        "created_at": user.created_at,
-                        "updated_at": user.updated_at,
-                    },
-                }
-            ),
-            200,
+            return redirect(f"{netpoll_url}not-found")
+        if user.expired_at <= int(created_at):
+            await AccountActiveDatabase.delete(
+                "user_id", user_id=valid_token["user_id"]
+            )
+            return redirect(f"{netpoll_url}not-found")
+        return render_template(
+            "account_active/verification.html",
+            user=user.user,
+            host_url=request.host_url,
         )
 
     @staticmethod
@@ -110,7 +99,7 @@ class AccountActiveController:
     <p>Hello {user.username},</p>
     <p>Someone has requested a link to verify your account, and you can do this through the link below.</p>
     <p>
-        <a href="{todoplus_url}user-verification?token={email_token}">
+        <a href="{url_for('account_active_router.account_active_email_verification', token=email_token, _external=True)}">
             Click here to activate your account
         </a>
     </p>
@@ -141,19 +130,12 @@ class AccountActiveController:
 
     @staticmethod
     async def user_account_active_verification(token):
+        created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
         if len(token.strip()) == 0:
-            return (
-                jsonify(
-                    {
-                        "message": "invalid input",
-                        "errors": {"token": ["token cannot be empty"]},
-                    }
-                ),
-                404,
-            )
+            return redirect(f"{netpoll_url}not-found")
         valid_token = await TokenAccountActiveEmail.get(token)
         if not valid_token:
-            return jsonify({"message": "invalid token"}), 404
+            return redirect(f"{netpoll_url}not-found")
         if not (
             token := await AccountActiveDatabase.get(
                 "account_active_email",
@@ -161,22 +143,16 @@ class AccountActiveController:
                 token_email=token,
             )
         ):
-            return jsonify({"message": "invalid token"}), 404
+            return redirect(f"{netpoll_url}not-found")
+        if token.expired_at <= int(created_at):
+            await AccountActiveDatabase.delete(
+                "user_id", user_id=valid_token["user_id"]
+            )
+            return redirect(f"{netpoll_url}not-found")
         user = await UserDatabase.get("user_id", user_id=valid_token["user_id"])
         await AccountActiveDatabase.update("user_id", user_id=valid_token["user_id"])
-        return (
-            jsonify(
-                {
-                    "message": "success send email active account",
-                    "data": {
-                        "user_id": user.user_id,
-                        "username": user.username,
-                        "email": user.email,
-                        "is_active": user.is_active,
-                        "created_at": user.created_at,
-                        "updated_at": user.updated_at,
-                    },
-                }
-            ),
-            201,
+        return render_template(
+            "account_active/account_verification.html",
+            user=user,
+            netpoll_url=netpoll_url,
         )
