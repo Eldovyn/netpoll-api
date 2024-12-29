@@ -2,7 +2,7 @@ from ..databases import ResetPasswordDatabase, UserDatabase
 from flask import jsonify, url_for, request, render_template, redirect
 from werkzeug.security import generate_password_hash
 import datetime
-from ..utils import TokenResetPassword, generate_id
+from ..utils import TokenResetPasswordEmail, generate_id, TokenResetPasswordWeb
 from ..config import netpoll_url
 import re
 from ..task import send_email_task
@@ -10,35 +10,56 @@ from ..task import send_email_task
 
 class ResetPasswordController:
     @staticmethod
-    async def user_reset_password_page(token):
-        valid_token = await TokenResetPassword.get(token)
+    async def user_account_reset_password_page(token):
+        created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        if not token:
+            return redirect(f"{netpoll_url}not-found")
+        if not (valid_token := await TokenResetPasswordWeb.get(token)):
+            return redirect(f"{netpoll_url}not-found")
+        if not (
+            user := await ResetPasswordDatabase.get(
+                "reset_password", user_id=valid_token["user_id"]
+            )
+        ):
+            return redirect(f"{netpoll_url}not-found")
+        if user.token_web != token:
+            return redirect(f"{netpoll_url}not-found")
+        if user.expired_at <= int(created_at):
+            await ResetPasswordDatabase.delete(
+                "user_id", user_id=valid_token["user_id"]
+            )
+            return redirect(f"{netpoll_url}not-found")
+        return render_template(
+            "reset_password/reset_password.html",
+            user=user.user,
+            host_url=request.host_url,
+        )
+
+    @staticmethod
+    async def link_reset_password(token):
+        valid_token = await TokenResetPasswordEmail.get(token)
         created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
         if request.method == "GET":
-            if (
-                not valid_token
-                or not "user_id" in valid_token
-                or not "created_at" in valid_token
-            ):
-                return jsonify({"message": "invalid token"}), 404
+            if not token:
+                return redirect(f"{netpoll_url}not-found")
             if not (
                 user := await ResetPasswordDatabase.get(
-                    "user_id", user_id=valid_token["user_id"]
+                    "reset_password", user_id=valid_token["user_id"]
                 )
             ):
-                return jsonify({"message": "user not found"}), 404
-            else:
-                if user.token != token:
-                    return jsonify({"message": "invalid token"}), 404
-                if user.expired_at <= created_at:
-                    await ResetPasswordDatabase.delete(
-                        "user_id", user_id=valid_token["user_id"]
-                    )
-                    return jsonify({"message": "token expired"}), 404
-            return render_template("reset_password/reset_password.html")
+                return redirect(f"{netpoll_url}not-found")
+            if user.token_email != token:
+                return redirect(f"{netpoll_url}not-found")
+            if user.expired_at <= int(created_at):
+                await ResetPasswordDatabase.delete(
+                    "user_id", user_id=valid_token["user_id"]
+                )
+                return redirect(f"{netpoll_url}not-found")
+            return render_template("reset_password/user_reset_password.html")
         if request.method == "POST":
-            data = request.form
-            password = data.get("password")
-
+            form = request.form
+            password = form.get("password")
+            confirm_password = form.get("confirmPassword")
             errors = {}
             if len(password.strip()) == 0:
                 if "password" in errors:
@@ -65,7 +86,13 @@ class ResetPasswordController:
                     errors["password"].append("password contains special character(s)")
                 else:
                     errors["password"] = ["password contains special character(s)"]
+            if password != confirm_password:
+                if "password" in errors:
+                    errors["password"].append("passwords do not match")
+                else:
+                    errors["password"] = ["passwords do not match"]
             if not errors:
+                print("masuk")
                 password = generate_password_hash(password)
                 await UserDatabase.update(
                     "password", new_password=password, user_id=valid_token["user_id"]
@@ -75,10 +102,11 @@ class ResetPasswordController:
                 )
                 return redirect(f"{netpoll_url}login")
             return render_template(
-                "reset_password.html",
+                "reset_password/user_reset_password.html",
                 errors=errors["password"],
-                error_length=len(errors["password"]),
                 password=password,
+                confirm_password=confirm_password,
+                user_token=token,
             )
 
     @staticmethod
@@ -100,10 +128,20 @@ class ResetPasswordController:
             )
         created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
         expired_at = created_at + 300
-        token = await TokenResetPassword.insert(f"{user.id}", int(created_at))
+        token_email = await TokenResetPasswordEmail.insert(
+            f"{user.user_id}", int(created_at)
+        )
+        token_web = await TokenResetPasswordWeb.insert(
+            f"{user.user_id}", int(created_at)
+        )
         if not (
             user_token := await ResetPasswordDatabase.insert(
-                generate_id(), user.user_id, token, int(expired_at), int(created_at)
+                generate_id(),
+                user.user_id,
+                token_email,
+                token_web,
+                int(expired_at),
+                int(created_at),
             )
         ):
             return (
@@ -112,7 +150,7 @@ class ResetPasswordController:
             )
         send_email_task.apply_async(
             args=[
-                "Reset Password TodoPlus",
+                "Reset Password Netpoll",
                 [user.email],
                 f"""<!DOCTYPE html>
 <html lang="en">
@@ -125,7 +163,7 @@ class ResetPasswordController:
     <p>Hello {user.username},</p>
     <p>Someone has requested a link to change your password, and you can do this through the link below.</p>
     <p>
-        <a href="{url_for('reset_password_router.link_reset_password', token=token, _external=True)}">
+        <a href="{url_for('reset_password_router.link_reset_password', token=token_email, _external=True)}">
             Click here to reset your password
         </a>
     </p>
@@ -142,10 +180,11 @@ class ResetPasswordController:
                 {
                     "message": "success send reset password",
                     "data": {
-                        "id": user.id,
+                        "user_id": user.user_id,
                         "username": user.username,
                         "email": user.email,
                         "is_active": user.is_active,
+                        "token": token_web,
                     },
                 }
             ),

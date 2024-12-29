@@ -9,20 +9,20 @@
 
 <body class="bg-black">
     <section class="w-full min-h-screen flex flex-col pt-8 pb-5 items-center justify-center">
-        <div class="bg-[#1c1c1e] w-[80%] md:w-[60%] xl:w-[45%] mx-auto rounded-md p-8 mt-[12rem]">
+        <div class="bg-[#1c1c1e] w-[80%] md:w-[60%] xl:w-[45%] mx-auto rounded-md p-8">
             <p class="text-center text-gray-400 font-semibold">
-                Thanks <span class="text-gray-300">{{ user.email }}</span> for your registration
+                Thanks <span class="text-gray-300" id="user-email">[User Email]</span> for your registration
             </p>
             <img
-                src="{{ url_for('static', filename='image/verification.png') }}"
+                src="[Verification Image URL]"
                 alt="Email Verification Icon"
                 class="w-[20%] m-3 mx-auto"
             />
             <p class="text-gray-400 text-sm text-center">
-                Your account has been successfully active
+                Your account has been successfully activated
             </p>
-            <a href="{{ netpoll_url }}login">
-                <p class="underline font-semibold text-sm text-gray-400 text-right">
+            <a href="[Login URL]">
+                <p class="underline text-sm text-blue-500 hover:text-blue-600 text-right">
                     Login
                 </p>
             </a>
@@ -30,7 +30,11 @@
     </section>
 
     <script>
+        document.getElementById('user-email').textContent = '{{ user.email }}';
+        document.querySelector('img').src = '{{ url_for('static', filename='image/verification.png') }}';
+        document.querySelector('a').href = '{{ netpoll_url }}login';
         setTimeout(() => { window.location.href = "{{ netpoll_url }}login"; }, 5000);
     </script>
 </body>
 </html>
+

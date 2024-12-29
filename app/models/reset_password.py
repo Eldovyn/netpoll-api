@@ -9,7 +9,8 @@ class ResetPasswordModel(db.Model):
     user_id = Column(
         String, ForeignKey("users.user_id", ondelete="CASCADE"), unique=True
     )
-    token = Column(String, nullable=False)
+    token_email = Column(String, nullable=False)
+    token_web = Column(String, nullable=False)
     created_at = Column(
         Integer,
         nullable=False,
@@ -28,14 +29,16 @@ class ResetPasswordModel(db.Model):
         self,
         reset_password_id,
         user_id,
-        token,
+        token_email,
+        token_web,
         created_at,
         updated_at,
         expired_at,
     ):
         self.reset_password_id = reset_password_id
         self.user_id = user_id
-        self.token = token
+        self.token_email = token_email
+        self.token_web = token_web
         self.created_at = created_at
         self.updated_at = updated_at
         self.expired_at = expired_at

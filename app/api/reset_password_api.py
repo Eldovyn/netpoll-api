@@ -16,4 +16,11 @@ async def user_reset_password():
     "/netpoll/reset-password/<string:token>", methods=["GET", "POST"]
 )
 async def link_reset_password(token):
-    return await reset_password_controller.user_reset_password_page(token)
+    return await reset_password_controller.link_reset_password(token)
+
+
+@reset_password_router.get("/netpoll/reset-password/page-reset-password")
+async def account_reset_password_page():
+    data = request.args
+    token = data.get("token", "")
+    return await reset_password_controller.user_account_reset_password_page(token)

@@ -5,19 +5,23 @@ from ..database import db
 
 class ResetPasswordDatabase(Database):
     @staticmethod
-    async def insert(account_active_id, user_id, token, expired_at, created_at):
+    async def insert(
+        reset_password_id, user_id, token_email, token_web, expired_at, created_at
+    ):
         if user := UserModel.query.filter(UserModel.user_id == user_id).first():
             if token := ResetPasswordModel.query.filter(
                 ResetPasswordModel.user_id == user_id
             ).first():
-                token.token = (token,)
+                token.token_email = token_email
+                token.token_web = token_web
                 token.expired_at = expired_at
                 token.updated_at = created_at
                 db.session.commit()
                 return token
             account_active = ResetPasswordModel(
-                account_active_id=account_active_id,
-                token=token,
+                reset_password_id=reset_password_id,
+                token_email=token_email,
+                token_web=token_web,
                 expired_at=expired_at,
                 created_at=created_at,
                 updated_at=created_at,
@@ -32,24 +36,25 @@ class ResetPasswordDatabase(Database):
         user_id = kwargs.get("user_id")
         web_token = kwargs.get("web_token")
         email_token = kwargs.get("email_token")
-        if category == "account_active":
-            if user := UserModel.query.filter(UserModel.user_id == user_id).first():
-                return ResetPasswordModel.query.filter(
-                    ResetPasswordModel.user_id == user.user_id
-                ).first()
-        if category == "account_active_email":
-            if user := UserModel.query.filter(UserModel.user_id == user_id).first():
-                return ResetPasswordModel.query.filter(
-                    ResetPasswordModel.token == email_token,
-                    ResetPasswordModel.user_id == user.user_id,
-                ).first()
+        if category == "reset_password":
+            return ResetPasswordModel.query.filter(
+                ResetPasswordModel.user_id == user_id
+            ).first()
+        if category == "reset_password_email":
+            return ResetPasswordModel.query.filter(
+                ResetPasswordModel.token_email == email_token,
+                ResetPasswordModel.user_id == user_id,
+            ).first()
 
     @staticmethod
     async def delete(category, **kwargs):
         user_id = kwargs.get("user_id")
         if category == "user_id":
-            if user_data := UserModel.objects(id=user_id).first():
-                return ResetPasswordModel.objects(user=user_data).delete()
+            if token := ResetPasswordModel.query.filter(
+                ResetPasswordModel.user_id == user_id
+            ).first():
+                db.session.delete(token)
+                db.session.commit()
 
     @staticmethod
     async def update(category, **kwargs):

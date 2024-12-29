@@ -35,4 +35,10 @@ class UserDatabase(Database):
 
     @staticmethod
     async def update(category, **kwargs):
-        pass
+        user_id = kwargs.get("user_id")
+        new_password = kwargs.get("new_password")
+        if category == "password":
+            if user := UserModel.query.filter(UserModel.user_id == user_id).first():
+                user.password = new_password
+                db.session.commit()
+                return user
