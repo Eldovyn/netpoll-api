@@ -1,6 +1,5 @@
 from ..databases import ResetPasswordDatabase, UserDatabase
 from flask import jsonify, url_for, request, render_template, redirect
-from werkzeug.security import generate_password_hash
 import datetime
 from ..utils import TokenResetPasswordEmail, generate_id, TokenResetPasswordWeb
 from ..config import netpoll_url
@@ -38,6 +37,8 @@ class ResetPasswordController:
 
     @staticmethod
     async def link_reset_password(token):
+        from ..bcrypt import bcrypt
+
         valid_token = await TokenResetPasswordEmail.get(token)
         created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
         if request.method == "GET":
@@ -93,10 +94,15 @@ class ResetPasswordController:
                 else:
                     errors["password"] = ["passwords do not match"]
             if not errors:
-                print("masuk")
-                password = generate_password_hash(password)
+                created_at = int(
+                    datetime.datetime.now(datetime.timezone.utc).timestamp()
+                )
+                password = bcrypt.generate_password_hash(password).decode("utf-8")
                 await UserDatabase.update(
-                    "password", new_password=password, user_id=valid_token["user_id"]
+                    "password",
+                    new_password=password,
+                    user_id=valid_token["user_id"],
+                    created_at=created_at,
                 )
                 await ResetPasswordDatabase.delete(
                     "user_id", user_id=valid_token["user_id"]

@@ -37,8 +37,10 @@ class UserDatabase(Database):
     async def update(category, **kwargs):
         user_id = kwargs.get("user_id")
         new_password = kwargs.get("new_password")
+        created_at = kwargs.get("created_at")
         if category == "password":
             if user := UserModel.query.filter(UserModel.user_id == user_id).first():
                 user.password = new_password
+                user.updated_at = created_at
                 db.session.commit()
                 return user
