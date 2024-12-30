@@ -12,6 +12,13 @@ async def account_active_email():
     return await account_active_controller.user_account_active(email)
 
 
+@account_active_router.patch("/netpoll/re-send/account-active")
+async def re_send_account_active_email():
+    data = request.json
+    email = data.get("email")
+    return await account_active_controller.re_send_user_account_active(email)
+
+
 @account_active_router.get("/netpoll/account-active/user-verification")
 async def account_active_email_verification():
     data = request.args
