@@ -36,6 +36,7 @@ class ResetPasswordDatabase(Database):
         user_id = kwargs.get("user_id")
         web_token = kwargs.get("web_token")
         email_token = kwargs.get("email_token")
+        created_at = kwargs.get("created_at")
         if category == "reset_password":
             return ResetPasswordModel.query.filter(
                 ResetPasswordModel.user_id == user_id
@@ -43,6 +44,10 @@ class ResetPasswordDatabase(Database):
         if category == "reset_password_email":
             return ResetPasswordModel.query.filter(
                 ResetPasswordModel.token_email == email_token,
+                ResetPasswordModel.user_id == user_id,
+            ).first()
+        if category == "token_active":
+            return ResetPasswordModel.query.filter(
                 ResetPasswordModel.user_id == user_id,
             ).first()
 
@@ -59,6 +64,10 @@ class ResetPasswordDatabase(Database):
     @staticmethod
     async def update(category, **kwargs):
         user_id = kwargs.get("user_id")
+        token_web = kwargs.get("token_web")
+        token_email = kwargs.get("token_email")
+        expired_at = kwargs.get("expired_at")
+        updated_at = kwargs.get("updated_at")
         if category == "user_id":
             if user := UserModel.query.filter(UserModel.user_id == user_id).first():
                 user.is_active = True
@@ -69,3 +78,13 @@ class ResetPasswordDatabase(Database):
                     db.session.delete(token)
                     db.session.commit()
                 return user
+        if category == "token_active":
+            if user_token := ResetPasswordModel.query.filter(
+                ResetPasswordModel.user_id == user_id
+            ).first():
+                user_token.token_web = token_web
+                user_token.token_email = token_email
+                user_token.expired_at = expired_at
+                user_token.updated_at = updated_at
+                db.session.commit()
+                return user_token

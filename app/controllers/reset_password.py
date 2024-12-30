@@ -33,6 +33,7 @@ class ResetPasswordController:
             "reset_password/reset_password.html",
             user=user.user,
             host_url=request.host_url,
+            netpoll_url=netpoll_url,
         )
 
     @staticmethod
@@ -108,6 +109,97 @@ class ResetPasswordController:
                 confirm_password=confirm_password,
                 user_token=token,
             )
+
+    @staticmethod
+    async def re_send_user_reset_password(email):
+        if len(email.strip()) == 0:
+            return (
+                jsonify(
+                    {
+                        "message": "input invalid",
+                        "errors": {"email": ["email cannot be empty"]},
+                    }
+                ),
+                400,
+            )
+        if not (user := await UserDatabase.get("email", email=email)):
+            return (
+                jsonify({"message": "email not found"}),
+                404,
+            )
+        created_at = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        if not (
+            user_token := await ResetPasswordDatabase.get(
+                "token_active", user_id=user.user_id
+            )
+        ):
+            return (
+                jsonify({"message": "user not found"}),
+                404,
+            )
+        if user_token.expired_at <= int(created_at):
+            await ResetPasswordDatabase.delete("user_id", user_id=user.user_id)
+            return (
+                jsonify({"message": "user not found"}),
+                404,
+            )
+        expired_at = created_at + 300
+        token_email = await TokenResetPasswordEmail.insert(
+            f"{user.user_id}", int(created_at)
+        )
+        token_web = await TokenResetPasswordWeb.insert(
+            f"{user.user_id}", int(created_at)
+        )
+        await ResetPasswordDatabase.update(
+            "token_active",
+            user_id=user.user_id,
+            token_email=token_email,
+            token_web=token_web,
+            expired_at=int(expired_at),
+            updated_at=int(created_at),
+        )
+        send_email_task.apply_async(
+            args=[
+                "Reset Password Netpoll",
+                [user.email],
+                f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset</title>
+</head>
+<body>
+    <p>Hello {user.username},</p>
+    <p>Someone has requested a link to change your password, and you can do this through the link below.</p>
+    <p>
+        <a href="{url_for('reset_password_router.link_reset_password', token=token_email, _external=True)}">
+            Click here to reset your password
+        </a>
+    </p>
+    <p>If you didn't request this, please ignore this email.</p>
+    <p>Your password won't change until you access the link above and create a new one.</p>
+</body>
+</html>
+""",
+                "reset password",
+            ],
+        )
+        return (
+            jsonify(
+                {
+                    "message": "success send reset password",
+                    "data": {
+                        "user_id": user.user_id,
+                        "username": user.username,
+                        "email": user.email,
+                        "is_active": user.is_active,
+                        "token": token_web,
+                    },
+                }
+            ),
+            201,
+        )
 
     @staticmethod
     async def user_reset_password(email):
