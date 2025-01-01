@@ -26,6 +26,8 @@ class UserModel(db.Model):
         "ResetPasswordModel", uselist=False, back_populates="user"
     )
     user_avatar = relationship("UserAvatarModel", uselist=False, back_populates="user")
+    answer = relationship("AnswerModel", uselist=False, back_populates="user")
+    polling = relationship("PollingModel", uselist=False, back_populates="user")
 
     def __init__(self, user_id, username, email, password):
         self.user_id = user_id

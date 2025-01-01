@@ -85,7 +85,9 @@ def create_app():
         from .api.account_active import account_active_router
         from .api.image_api import image_router
         from .api.logout import logout_router
+        from .api.polling import polling_router
 
+        app.register_blueprint(polling_router)
         app.register_blueprint(register_router)
         app.register_blueprint(login_router)
         app.register_blueprint(me_router)
