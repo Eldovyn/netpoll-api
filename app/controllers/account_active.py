@@ -43,7 +43,7 @@ class AccountActiveController:
             return (
                 jsonify(
                     {
-                        "message": "input is not valid",
+                        "message": "data is not valid",
                         "errors": errors,
                     }
                 ),
@@ -59,12 +59,6 @@ class AccountActiveController:
                 jsonify(
                     {
                         "message": "user already active",
-                        "data": {
-                            "user_id": user.user_id,
-                            "username": user.username,
-                            "email": user.email,
-                            "is_active": user.is_active,
-                        },
                     }
                 ),
                 409,
@@ -153,7 +147,7 @@ class AccountActiveController:
             return (
                 jsonify(
                     {
-                        "message": "input is not valid",
+                        "message": "data is not valid",
                         "errors": errors,
                     }
                 ),
@@ -169,12 +163,6 @@ class AccountActiveController:
                 jsonify(
                     {
                         "message": "user already active",
-                        "data": {
-                            "user_id": user.user_id,
-                            "username": user.username,
-                            "email": user.email,
-                            "is_active": user.is_active,
-                        },
                     }
                 ),
                 409,
