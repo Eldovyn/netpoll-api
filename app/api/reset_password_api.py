@@ -8,14 +8,14 @@ reset_password_controller = ResetPasswordController()
 @reset_password_router.post("/netpoll/reset-password")
 async def user_reset_password():
     data = request.json
-    email = data.get("email")
+    email = data.get("email", "")
     return await reset_password_controller.user_reset_password(email)
 
 
 @reset_password_router.patch("/netpoll/re-send/reset-password")
 async def re_send_user_reset_password():
     data = request.json
-    email = data.get("email")
+    email = data.get("email", "")
     return await reset_password_controller.re_send_user_reset_password(email)
 
 
