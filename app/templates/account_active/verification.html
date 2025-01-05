@@ -25,10 +25,8 @@
                     window.location.href = `{{ host_url }}netpoll/account-active/page-verification?token=${data.data.token}`;
                     return;
                 }
-                if (response.status === 404) {
-                    window.location.href = `{{ netpoll_url }}not-found`;
-                    return;
-                }
+                window.location.href = `{{ netpoll_url }}not-found`;
+                return;
             } catch (error) {
                 console.error('Error:', error.message);
                 alert('Error resending verification email. Please try again later.');
