@@ -209,9 +209,9 @@ class UserController:
         from ..bcrypt import bcrypt
 
         errors = {}
-        if len(email.strip()) == 0:
+        if not email or len(email.strip()) == 0:
             errors["email"] = ["email cannot be empty"]
-        if len(password.strip()) == 0:
+        if not password or len(password.strip()) == 0:
             errors["password"] = ["password cannot be empty"]
         if errors:
             return jsonify({"message": "input invalid", "errors": errors}), 400
