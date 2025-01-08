@@ -5,6 +5,8 @@ from flask_jwt_extended import create_access_token
 import re
 from ..utils import generate_id
 import datetime
+from cloudinary.utils import cloudinary_url
+import cloudinary
 
 
 class UserController:
@@ -190,7 +192,7 @@ class UserController:
                         "username": user.username,
                         "email": user.email,
                         "is_active": user.is_active,
-                        "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, avatar_id=user.user_avatar.avatar_id, _external=True)}',
+                        "avatar": user.user_avatar.avatar,
                     },
                 }
             ),
@@ -232,7 +234,6 @@ class UserController:
                             "username": user.username,
                             "email": user.email,
                             "is_active": user.is_active,
-                            "avatar": f'{url_for("image_router.get_avatar", user_id=user.user_id, avatar_id=user.user_avatar.avatar_id, _external=True)}',
                         },
                     }
                 ),
@@ -319,9 +320,18 @@ class UserController:
         result_password = bcrypt.generate_password_hash(password).decode("utf-8")
         user_id = generate_id()
         avatar_id = generate_id()
+        upload_result = cloudinary.uploader.upload(
+            avatar,
+            public_id=avatar_id,
+        )
         try:
             user = await UserDatabase.insert(
-                user_id, email, username, result_password, avatar, avatar_id
+                user_id,
+                email,
+                username,
+                result_password,
+                avatar_id,
+                upload_result["secure_url"],
             )
         except sqlalchemy.exc.IntegrityError:
             return (

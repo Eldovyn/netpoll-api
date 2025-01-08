@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, LargeBinary
+from sqlalchemy import Column, String, Integer, ForeignKey
 from ..database import db
 from sqlalchemy.orm import relationship
 import datetime
@@ -11,7 +11,7 @@ class UserAvatarModel(db.Model):
     user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"))
     created_at = Column(Integer, nullable=False)
     updated_at = Column(Integer, nullable=False)
-    avatar = Column(LargeBinary, nullable=False)
+    avatar = Column(String, nullable=False)
     user = relationship("UserModel", back_populates="user_avatar")
 
     def __init__(self, avatar_id, user_id, avatar):

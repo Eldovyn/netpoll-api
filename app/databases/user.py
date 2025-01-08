@@ -5,16 +5,14 @@ from ..database import db
 
 class UserDatabase(Database):
     @staticmethod
-    async def insert(user_id, email, username, password, avatar_image, avatar_id):
-        with open(avatar_image, "rb") as f:
-            avatar = f.read()
+    async def insert(user_id, email, username, password, avatar_id, avatar):
         user = UserModel(
             email=email,
             username=username,
             password=password,
             user_id=user_id,
         )
-        avatar = UserAvatarModel(avatar_id, user_id, avatar)
+        avatar = UserAvatarModel(user_id=user_id, avatar=avatar, avatar_id=avatar_id)
         db.session.add(user)
         db.session.add(avatar)
         db.session.commit()

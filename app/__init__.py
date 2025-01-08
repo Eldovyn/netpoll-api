@@ -18,14 +18,26 @@ from .config import (
     smtp_host,
     smtp_port,
     database_postgres_url,
+    cloudinary_api_key,
+    cloudinary_api_secret,
+    cloudinary_cloud_name,
 )
 from .database import db
 from .jwt import jwt
 from .mail import mail
+import cloudinary
+import cloudinary.uploader
 
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
+
+    cloudinary.config(
+        cloud_name=cloudinary_cloud_name,
+        api_key=cloudinary_api_key,
+        api_secret=cloudinary_api_secret,
+        secure=True,
+    )
 
     app.config.from_mapping(
         CELERY=dict(
