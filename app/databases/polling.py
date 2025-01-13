@@ -34,6 +34,8 @@ class PollingDatabase(Database):
             return PollingModel.query.filter(
                 PollingModel.polling_id == polling_id
             ).first()
+        if category == "polling_user":
+            return PollingModel.query.filter(PollingModel.user_id == user_id).all()
 
     @staticmethod
     async def delete(category, **kwargs):

@@ -28,3 +28,10 @@ async def get_polling():
     data = request.args
     polling_id = data.get("polling_id", "")
     return await polling_controller.get_polling(current_user, polling_id)
+
+
+@polling_router.get("/netpoll/my-polling")
+@jwt_required()
+async def get_my_polling():
+    current_user = get_jwt_identity()
+    return await polling_controller.get_my_polling(current_user)

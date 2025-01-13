@@ -5,6 +5,42 @@ from ..utils import generate_id
 
 class PollingController:
     @staticmethod
+    async def get_my_polling(user_id):
+        if not (user := await UserDatabase.get("user_id", user_id=user_id)):
+            return jsonify({"message": "authorization invalid"}), 401
+        if not (
+            polling_data := await PollingDatabase.get("polling_user", user_id=user_id)
+        ):
+            return (
+                jsonify({"message": "polling not found"}),
+                404,
+            )
+        return (
+            jsonify(
+                {
+                    "message": "success get polling",
+                    "data": {
+                        "username": user.username,
+                        "user_id": user.user_id,
+                        "polling": [
+                            {
+                                "polling_id": polling.polling_id,
+                                "title": polling.title,
+                                "private": polling.private,
+                                "multi_choice": polling.multi_choice,
+                                "disable_comment": polling.disable_comment,
+                                "created_at": polling.created_at,
+                                "updated_at": polling.updated_at,
+                            }
+                            for polling in polling_data
+                        ],
+                    },
+                }
+            ),
+            200,
+        )
+
+    @staticmethod
     async def get_polling(user_id, polling_id):
         errors = {}
         if len(polling_id.strip()) == 0:
