@@ -68,7 +68,10 @@ class PollingController:
                     errors["answer"].append("answer cannot be more than 5")
             for index, valuue in enumerate(answer):
                 if len(valuue.strip()) == 0:
-                    errors[f"answer {index}"] = [f"answer {index} cannot be empty"]
+                    if "answer" not in errors:
+                        errors["answer"] = [f"answer {index + 1} cannot be empty"]
+                    else:
+                        errors["answer"].append(f"answer {index + 1} cannot be empty")
         else:
             if "answer" not in errors:
                 errors["answer"] = ["answer must be list"]
