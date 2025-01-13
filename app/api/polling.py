@@ -34,4 +34,10 @@ async def get_polling():
 @jwt_required()
 async def get_my_polling():
     current_user = get_jwt_identity()
-    return await polling_controller.get_my_polling(current_user)
+    data = request.args
+    per_page = data.get("per_page", "5")
+    page = data.get("page", "5")
+    current_page = data.get("current_page", "0")
+    return await polling_controller.get_my_polling(
+        current_user, per_page, page, current_page
+    )

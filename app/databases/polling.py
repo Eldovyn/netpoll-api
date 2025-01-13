@@ -2,6 +2,7 @@ from .database import Database
 from ..models import PollingModel, AnswerModel, UserModel
 from .. import db
 from ..utils import generate_id
+from sqlalchemy.orm import load_only
 
 
 class PollingDatabase(Database):
@@ -35,7 +36,22 @@ class PollingDatabase(Database):
                 PollingModel.polling_id == polling_id
             ).first()
         if category == "polling_user":
-            return PollingModel.query.filter(PollingModel.user_id == user_id).all()
+            return (
+                PollingModel.query.options(
+                    load_only(
+                        PollingModel.polling_id,
+                        PollingModel.user_id,
+                        PollingModel.title,
+                        PollingModel.private,
+                        PollingModel.multi_choice,
+                        PollingModel.disable_comment,
+                        PollingModel.created_at,
+                        PollingModel.updated_at,
+                    )
+                )
+                .filter(PollingModel.user_id == user_id)
+                .all()
+            )
 
     @staticmethod
     async def delete(category, **kwargs):
