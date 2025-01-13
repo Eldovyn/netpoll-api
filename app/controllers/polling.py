@@ -62,7 +62,18 @@ class PollingController:
             if len(answer) == 0:
                 errors["answer"] = ["answer cannot be empty"]
             if len(answer) > 5:
-                errors["answer"] = ["answer cannot be more than 5"]
+                if "answer" not in errors:
+                    errors["answer"] = ["answer cannot be more than 5"]
+                else:
+                    errors["answer"].append("answer cannot be more than 5")
+            for index, valuue in enumerate(answer):
+                if len(valuue.strip()) == 0:
+                    errors[f"answer {index}"] = [f"answer {index} cannot be empty"]
+        else:
+            if "answer" not in errors:
+                errors["answer"] = ["answer must be list"]
+            else:
+                errors["answer"].append("answer must be list")
         if not isinstance(private, bool):
             errors["private"] = ["private must be boolean"]
         if not isinstance(multi_choice, bool):
