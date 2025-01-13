@@ -23,7 +23,7 @@ class PollingController:
         return (
             jsonify(
                 {
-                    "message": "success create polling",
+                    "message": "success get polling",
                     "data": {
                         "username": polling.user.username,
                         "user_id": polling.user.user_id,
