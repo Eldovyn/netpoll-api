@@ -36,8 +36,18 @@ async def get_my_polling():
     current_user = get_jwt_identity()
     data = request.args
     per_page = data.get("per_page", "5")
-    page = data.get("page", "5")
     current_page = data.get("current_page", "0")
-    return await polling_controller.get_my_polling(
-        current_user, per_page, page, current_page
+    return await polling_controller.get_my_polling(current_user, per_page, current_page)
+
+
+@polling_router.get("/netpoll/my-polling/search")
+@jwt_required()
+async def search_my_polling_by_title():
+    current_user = get_jwt_identity()
+    data = request.args
+    title = data.get("title", "")
+    per_page = data.get("per_page", "5")
+    current_page = data.get("current_page", "0")
+    return await polling_controller.search_my_polling_by_title(
+        current_user, per_page, current_page, title
     )

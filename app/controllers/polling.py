@@ -6,7 +6,7 @@ from math import ceil
 
 class PollingController:
     @staticmethod
-    async def get_my_polling(user_id, per_page, page, current_page):
+    async def search_my_polling_by_title(user_id, per_page, current_page, title):
         if not (user := await UserDatabase.get("user_id", user_id=user_id)):
             return jsonify({"message": "authorization invalid"}), 401
         errors = {}
@@ -19,15 +19,88 @@ class PollingController:
                     errors["per_page"] = ["per_page must be greater than 0"]
                 else:
                     errors["per_page"].append("per_page must be greater than 0")
-        if not page.isdigit():
-            errors["page"] = ["page must be integer"]
+        if not current_page.isdigit():
+            errors["current_page"] = ["current_page must be integer"]
         else:
-            page = int(page)
-            if page <= 0:
-                if "page" not in errors:
-                    errors["page"] = ["page must be greater than 0"]
+            current_page = int(current_page)
+            if current_page < 0:
+                if "current_page" not in errors:
+                    errors["current_page"] = ["current_page must be greater than 0"]
                 else:
-                    errors["page"].append("page must be greater than 0")
+                    errors["current_page"].append("current_page must be greater than 0")
+        if errors:
+            return jsonify({"message": "input invalid", "errors": errors}), 400
+        if not (
+            polling_data := await PollingDatabase.get(
+                "polling_user_title", user_id=user_id, title=title
+            )
+        ):
+            return (
+                jsonify({"message": "polling not found"}),
+                404,
+            )
+        paginated_data = [
+            polling_data[i : i + per_page]
+            for i in range(0, len(polling_data), per_page)
+        ]
+        for i in paginated_data:
+            for index, polling in enumerate(i):
+                i[index] = {
+                    "polling_id": polling.polling_id,
+                    "title": polling.title,
+                    "private": polling.private,
+                    "multi_choice": polling.multi_choice,
+                    "disable_comment": polling.disable_comment,
+                    "created_at": polling.created_at,
+                    "updated_at": polling.updated_at,
+                }
+
+        return (
+            jsonify(
+                {
+                    "message": "success get polling",
+                    "data": {
+                        "username": user.username,
+                        "user_id": user.user_id,
+                        "polling": [
+                            {
+                                "polling_id": polling.polling_id,
+                                "title": polling.title,
+                                "private": polling.private,
+                                "multi_choice": polling.multi_choice,
+                                "disable_comment": polling.disable_comment,
+                                "created_at": polling.created_at,
+                                "updated_at": polling.updated_at,
+                            }
+                            for polling in polling_data
+                        ],
+                    },
+                    "page": {
+                        "total_page": len(paginated_data),
+                        "pollings": paginated_data,
+                        "current_page": current_page,
+                        "size": len(polling_data),
+                        "per_page": per_page,
+                    },
+                }
+            ),
+            200,
+        )
+
+    @staticmethod
+    async def get_my_polling(user_id, per_page, current_page):
+        if not (user := await UserDatabase.get("user_id", user_id=user_id)):
+            return jsonify({"message": "authorization invalid"}), 401
+        errors = {}
+        if not per_page.isdigit():
+            errors["per_page"] = ["per_page must be integer"]
+        else:
+            per_page = int(per_page)
+            if per_page <= 0:
+                if "per_page" not in errors:
+                    errors["per_page"] = ["per_page must be greater than 0"]
+                else:
+                    errors["per_page"].append("per_page must be greater than 0")
         if not current_page.isdigit():
             errors["current_page"] = ["current_page must be integer"]
         else:
@@ -44,11 +117,6 @@ class PollingController:
         ):
             return (
                 jsonify({"message": "polling not found"}),
-                404,
-            )
-        if page < 1 or page > len(polling_data):
-            return (
-                jsonify({"message": "page not found"}),
                 404,
             )
         paginated_data = [
